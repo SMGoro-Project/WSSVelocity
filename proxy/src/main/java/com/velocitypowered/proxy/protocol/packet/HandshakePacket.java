@@ -117,6 +117,20 @@ public class HandshakePacket implements MinecraftPacket {
     return handler.handle(this);
   }
 
+
+  @Override
+  public int expectedMinLength(ByteBuf buf, ProtocolUtils.Direction direction,
+                               ProtocolVersion version) {
+    return 7;
+  }
+
+  @Override
+  public int expectedMaxLength(ByteBuf buf, ProtocolUtils.Direction direction,
+                               ProtocolVersion version) {
+    return 9 + (MAXIMUM_HOSTNAME_LENGTH * 3);
+
+  }
+
   private static String getServerAddress(ByteBuf buf, BungeeHandshakeData handShakeData) {
     if (handShakeData == null) {
       return ProtocolUtils.readString(buf, MAXIMUM_HOSTNAME_LENGTH);
@@ -137,5 +151,4 @@ public class HandshakePacket implements MinecraftPacket {
       e.printStackTrace();
       throw e;
     }
-  }
 }
