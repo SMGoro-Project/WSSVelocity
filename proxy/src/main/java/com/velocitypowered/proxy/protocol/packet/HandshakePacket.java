@@ -17,7 +17,6 @@
 
 package com.velocitypowered.proxy.protocol.packet;
 
-import static com.velocitypowered.proxy.connection.PlayerDataForwarding.LEGACY_SEPARATOR;
 import static com.velocitypowered.proxy.connection.forge.legacy.LegacyForgeConstants.HANDSHAKE_HOSTNAME_TOKEN;
 
 import com.velocitypowered.api.network.HandshakeIntent;
@@ -97,8 +96,8 @@ public class HandshakePacket implements MinecraftPacket {
   public void decode(ByteBuf buf, ProtocolUtils.Direction direction, ProtocolVersion ignored) {
     int realProtocolVersion = ProtocolUtils.readVarInt(buf);
     this.protocolVersion = ProtocolVersion.getProtocolVersion(realProtocolVersion);
-    this.bungeeHandshakeData = decode(ProtocolUtils.readString(buf));
-    this.serverAddress = getServerAddress(buf,bungeeHandshakeData);
+    this.bungeeHandshakeData = BungeeHandshakeData.decodeFromString(ProtocolUtils.readString(buf));
+    this.serverAddress = getServerAddress(bungeeHandshakeData);
     this.port = buf.readUnsignedShort();
     this.nextStatus = ProtocolUtils.readVarInt(buf);
     this.intent = HandshakeIntent.getById(nextStatus);
@@ -131,24 +130,10 @@ public class HandshakePacket implements MinecraftPacket {
 
   }
 
-  private static String getServerAddress(ByteBuf buf, BungeeHandshakeData handShakeData) {
-    if (handShakeData == null) {
-      return ProtocolUtils.readString(buf, MAXIMUM_HOSTNAME_LENGTH);
-    }
-
+  private static String getServerAddress(BungeeHandshakeData handShakeData) {
     String address = handShakeData.serverHostname();
     NettyPreconditions.checkFrame(address.length() <= MAXIMUM_HOSTNAME_LENGTH, "Got a too-long string (got %s, max %s)", address.length(), MAXIMUM_HOSTNAME_LENGTH);
 
     return address;
   }
-
-  private static BungeeHandshakeData decode(String string) {
-    if (string.split("" + LEGACY_SEPARATOR).length < 4) return null;
-
-    try {
-      return BungeeHandshakeData.decodeFromString(string);
-    } catch (Exception e) {
-      e.printStackTrace();
-      throw e;
-    }
 }
